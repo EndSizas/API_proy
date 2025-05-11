@@ -114,43 +114,43 @@ export const registerUser = async (req, res) => {
   
 
   
-// Iniciar sesión
-export const loginUser = async (req, res) => {
-    const { email, contrasena } = req.body;
+  // Iniciar sesión
+  export const loginUser = async (req, res) => {
+      const { email, contrasena } = req.body;
 
-    try {
-        const [users] = await conmysql.query('SELECT * FROM usuarios WHERE email = ?', [email]);
-        if (users.length === 0) {
-            return res.status(404).json({ message: 'Usuario no encontrado' });
-        }
+      try {
+          const [users] = await conmysql.query('SELECT * FROM usuarios WHERE email = ?', [email]);
+          if (users.length === 0) {
+              return res.status(404).json({ message: 'Usuario no encontrado' });
+          }
 
-        const user = users[0];
+          const user = users[0];
 
-        const isMatch = await bcrypt.compare(contrasena, user.contrasena);
-        if (!isMatch) {
-            return res.status(400).json({ message: 'Credenciales inválidas' });
-        }
+          const isMatch = await bcrypt.compare(contrasena, user.contrasena);
+          if (!isMatch) {
+              return res.status(400).json({ message: 'Credenciales inválidas' });
+          }
 
-        const token = jwt.sign(
-            { id: user.id_usuario, tipo: user.tipo_usuario },
-            JWT_SECRET,
-            { expiresIn: '24h' }
-        );
+          const token = jwt.sign(
+              { id: user.id_usuario, tipo: user.tipo_usuario },
+              JWT_SECRET,
+              { expiresIn: '24h' }
+          );
 
-        res.json({ 
-            token,
-            user: {
-                id: user.id_usuario,
-                tipo: user.tipo_usuario,
-                nombre: user.nombre,
-                email: user.email
-            }
-        });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Error al iniciar sesión' });
-    }
-};
+          res.json({ 
+              token,
+              user: {
+                  id_usuario: user.id_usuario,
+                  tipo_usuario: user.tipo_usuario,
+                  nombre: user.nombre,
+                  email: user.email,    
+              }
+          });
+      } catch (error) {
+          console.error(error);
+          res.status(500).json({ message: 'Error al iniciar sesión' });
+      }
+  };
 
 // Obtener perfil de usuario
 export const getUserProfile = async (req, res) => {
