@@ -118,17 +118,28 @@ export const updateCaseStatus = async (req, res) => {
 };
 
 
-// Obtener casos asignados a una organización
+// Obtener casos asignados a una organización - Versión corregida
 export const getOrganizationCases = async (req, res) => {
-    const userId = req.user.id;
+    const userId = req.user.id; // El ID viene del token JWT
     const { estado } = req.query;
 
     try {
+        // Verificar que el usuario es una organización
+        const [users] = await conmysql.query('SELECT tipo_usuario FROM usuarios WHERE id_usuario = ?', [userId]);
+        if (users.length === 0 || users[0].tipo_usuario !== 'organizacion') {
+            return res.status(403).json({ message: 'Acceso no autorizado' });
+        }
+
         let query = `
-            SELECT a.*, sc.estado_actual, sc.fecha_actualizacion,
-                   (SELECT url_imagen FROM imagenes_animales WHERE id_animal = a.id_animal AND es_principal = 1 LIMIT 1) as imagen_principal,
-                   (SELECT latitud FROM ubicaciones WHERE id_animal = a.id_animal ORDER BY fecha_ubicacion DESC LIMIT 1) as latitud,
-                   (SELECT longitud FROM ubicaciones WHERE id_animal = a.id_animal ORDER BY fecha_ubicacion DESC LIMIT 1) as longitud
+            SELECT 
+                a.*, 
+                sc.estado_actual, 
+                sc.observaciones as observaciones_seguimiento,
+                sc.fecha_actualizacion,
+                (SELECT url_imagen FROM imagenes_animales WHERE id_animal = a.id_animal AND es_principal = 1 LIMIT 1) as imagen_principal,
+                (SELECT latitud FROM ubicaciones WHERE id_animal = a.id_animal ORDER BY fecha_ubicacion DESC LIMIT 1) as latitud,
+                (SELECT longitud FROM ubicaciones WHERE id_animal = a.id_animal ORDER BY fecha_ubicacion DESC LIMIT 1) as longitud,
+                (SELECT nombre FROM usuarios WHERE id_usuario = a.id_usuario_reporta) as nombre_reportante
             FROM animales a
             JOIN seguimiento_casos sc ON a.id_animal = sc.id_animal
             WHERE sc.id_organizacion = ?
@@ -144,12 +155,13 @@ export const getOrganizationCases = async (req, res) => {
         query += ' ORDER BY sc.fecha_actualizacion DESC';
 
         const [cases] = await conmysql.query(query, params);
-
-        // Opcional: Podrías validar que las imágenes devueltas estén accesibles desde Cloudinary
         res.json(cases);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Error al obtener casos de la organización' });
+        console.error('Error en getOrganizationCases:', error);
+        res.status(500).json({ 
+            message: 'Error al obtener casos',
+            error: error.message 
+        });
     }
 };
 

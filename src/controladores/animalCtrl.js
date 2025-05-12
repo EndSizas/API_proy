@@ -222,21 +222,6 @@ export const updateAnimalLocation = async (req, res) => {
     }
 };
 
-// Obtener animales no asignados a ninguna organización
-export const getNoAssignedAnimals = async (req, res) => {
-  try {
-    // Consultamos los animales que no están asignados a un caso
-    const [animals] = await conmysql.query(
-      'SELECT * FROM animales WHERE id_animal NOT IN (SELECT id_animal FROM seguimiento_casos)'
-    );
-    res.json(animals);  // Devolvemos la lista de animales no asignados
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Error al obtener animales no asignados' });
-  }
-};
-
-
 
 // Añadir imágenes para un animal
 export const addAnimalImages = async (req, res) => {
@@ -287,8 +272,6 @@ export const addAnimalImages = async (req, res) => {
         console.error("Error al agregar imágenes del animal:", error);
         res.status(500).json({ message: 'Error al agregar imágenes del animal', error: error.message });
     }
-
-    
 };
 
 
