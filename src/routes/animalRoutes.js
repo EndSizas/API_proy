@@ -12,6 +12,6 @@ router.get('/', getAnimals); // Pública para ver animales
 router.get('/:id', getAnimalDetails); // Pública para ver detalles// Pública para ver detalles con ubicación
 router.post('/:id/locacion', verifyToken, updateAnimalLocation);
 router.post('/:id/imagenes', verifyToken, upload, addAnimalImages);
-router.get('/animales/no-asignados', getNoAssignedAnimals);
+router.get('/no-asignados', getNoAssignedAnimals);
 
 export default router;
