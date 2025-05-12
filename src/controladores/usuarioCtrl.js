@@ -111,8 +111,24 @@ export const registerUser = async (req, res) => {
       });
     }
   };
-  
 
+  // En controlador usuarioCtrl.js
+export const getCurrentUser = async (req, res) => {
+  try {
+    const userId = req.user.id_usuario;
+
+    const result = await db.query('SELECT * FROM usuarios WHERE id_usuario = $1', [userId]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error al obtener usuario:', error);
+    res.status(500).json({ message: 'Error interno del servidor' });
+  }
+};
   
   // Iniciar sesión
   export const loginUser = async (req, res) => {
@@ -282,5 +298,9 @@ export const deleteUser = async (req, res) => {
         error: error.message
       });
     }
+
+
+
+
   };
   
