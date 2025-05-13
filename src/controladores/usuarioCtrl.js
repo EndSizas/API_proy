@@ -171,7 +171,11 @@ export const getUserProfile = async (req, res) => {
             profile = profiles[0] || {};
         }
 
-        res.json({ ...user, profile });
+        res.json({
+          user,
+          perfil: profile
+          }); 
+
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Error al obtener perfil de usuario' });
