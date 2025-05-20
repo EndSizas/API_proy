@@ -16,7 +16,7 @@ const __dirname = path.dirname(__filename);
 const app = express();
 
 const corsOptions = {
-  origin: 'http://localhost:8100',
+  origin: '*',
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization']
