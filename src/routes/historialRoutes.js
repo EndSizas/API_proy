@@ -11,6 +11,6 @@ const router = express.Router();
 // Rutas protegidas
 router.get('/animal/:id', verifyToken, getAnimalHistory);
 router.get('/organizacion', verifyToken, getOrganizationHistory);
-router.get('/tipousuario', verifyToken, getCitizenHistory);
+router.get('/tipousuario', verifyToken, getCitizenHistory); 
 
 export default router;
