@@ -235,6 +235,107 @@ export const updateUserProfile = async (req, res) => {
     }
 };
 
+// Actualización parcial del perfil de usuario (solo campos enviados)
+export const updatePartialUserProfile = async (req, res) => {
+    const userId = req.user.id;
+    const { nombre, telefono, direccion, ...profileData } = req.body;
+
+    try {
+        // Actualizar solo campos enviados del usuario
+        if (nombre || telefono || direccion) {
+            const camposUsuario = [];
+            const valoresUsuario = [];
+
+            if (nombre !== undefined) {
+                camposUsuario.push('nombre = ?');
+                valoresUsuario.push(nombre);
+            }
+            if (telefono !== undefined) {
+                camposUsuario.push('telefono = ?');
+                valoresUsuario.push(telefono);
+            }
+            if (direccion !== undefined) {
+                camposUsuario.push('direccion = ?');
+                valoresUsuario.push(direccion);
+            }
+
+            if (camposUsuario.length > 0) {
+                await conmysql.query(
+                    `UPDATE usuarios SET ${camposUsuario.join(', ')} WHERE id_usuario = ?`,
+                    [...valoresUsuario, userId]
+                );
+            }
+        }
+
+        const [users] = await conmysql.query('SELECT tipo_usuario FROM usuarios WHERE id_usuario = ?', [userId]);
+        const tipo_usuario = users[0].tipo_usuario;
+
+        // Ciudadano
+        if (tipo_usuario === 'ciudadano') {
+            const camposCiudadano = [];
+            const valoresCiudadano = [];
+
+            for (const campo of ['fecha_nacimiento', 'genero', 'ocupacion', 'biografia', 'red_social']) {
+                if (profileData[campo] !== undefined) {
+                    camposCiudadano.push(`${campo} = ?`);
+                    valoresCiudadano.push(profileData[campo]);
+                }
+            }
+
+            if (profileData.foto_perfil && profileData.foto_perfil.startsWith('data:')) {
+                const uploadedImage = await cloudinary.uploader.upload(profileData.foto_perfil, {
+                    folder: 'usuarios_perfiles/ciudadanos',
+                });
+                camposCiudadano.push(`foto_perfil = ?`);
+                valoresCiudadano.push(uploadedImage.secure_url);
+            }
+
+            if (camposCiudadano.length > 0) {
+                camposCiudadano.push('fecha_actualizacion = CURRENT_TIMESTAMP');
+                await conmysql.query(
+                    `UPDATE perfiles_ciudadanos SET ${camposCiudadano.join(', ')} WHERE id_usuario = ?`,
+                    [...valoresCiudadano, userId]
+                );
+            }
+        }
+
+        // Organización
+        else if (tipo_usuario === 'organizacion') {
+            const camposOrg = [];
+            const valoresOrg = [];
+
+            for (const campo of ['representante', 'mision', 'vision', 'sitio_web', 'redes_sociales', 'fecha_fundacion']) {
+                if (profileData[campo] !== undefined) {
+                    camposOrg.push(`${campo} = ?`);
+                    valoresOrg.push(profileData[campo]);
+                }
+            }
+
+            if (profileData.logo_organizacion && profileData.logo_organizacion.startsWith('data:')) {
+                const uploadedLogo = await cloudinary.uploader.upload(profileData.logo_organizacion, {
+                    folder: 'usuarios_perfiles/organizaciones',
+                });
+                camposOrg.push(`logo_organizacion = ?`);
+                valoresOrg.push(uploadedLogo.secure_url);
+            }
+
+            if (camposOrg.length > 0) {
+                camposOrg.push('fecha_actualizacion = CURRENT_TIMESTAMP');
+                await conmysql.query(
+                    `UPDATE perfiles_organizaciones SET ${camposOrg.join(', ')} WHERE id_usuario = ?`,
+                    [...valoresOrg, userId]
+                );
+            }
+        }
+
+        res.json({ message: 'Perfil actualizado parcialmente con éxito' });
+    } catch (error) {
+        console.error('Error en actualización parcial:', error);
+        res.status(500).json({ message: 'Error al actualizar perfil parcialmente' });
+    }
+};
+
+
 // Eliminar usuario
 export const deleteUser = async (req, res) => {
     const userId = req.params.id;
