@@ -114,6 +114,7 @@ export const registerUser = async (req, res) => {
   
   // Iniciar sesión
   export const loginUser = async (req, res) => {
+    console.log('Petición login recibida:', req.body);
       const { email, contrasena } = req.body;
 
       try {
