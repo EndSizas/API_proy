@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import { JWT_SECRET } from '../config.js'; // Asegúrate de tener JWT_SECRET bien definido
+import { JWT_SECRET } from '../config.js'; 
 
 export const verifyToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];

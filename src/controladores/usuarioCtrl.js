@@ -156,35 +156,83 @@ export const getUserProfile = async (req, res) => {
     const userId = req.params.id;
 
     try {
+        // Obtener información básica del usuario
         const [users] = await conmysql.query('SELECT * FROM usuarios WHERE id_usuario = ?', [userId]);
         if (users.length === 0) {
             return res.status(404).json({ message: 'Usuario no encontrado' });
         }
 
         const user = users[0];
-        let profile = {};
+        let profileData = {
+            profile_id: null,
+            profile_type: user.tipo_usuario,
+            details: {}
+        };
 
+        // Obtener información específica del perfil según el tipo de usuario
         if (user.tipo_usuario === 'ciudadano') {
-            const [profiles] = await conmysql.query('SELECT * FROM perfiles_ciudadanos WHERE id_usuario = ?', [userId]);
-            profile = profiles[0] || {};
+            const [profiles] = await conmysql.query(
+                'SELECT id_perfil_ciudadano, foto_perfil, fecha_nacimiento, genero, ocupacion, biografia, red_social FROM perfiles_ciudadanos WHERE id_usuario = ?', 
+                [userId]
+            );
+            
+            if (profiles.length > 0) {
+                profileData.profile_id = profiles[0].id_perfil_ciudadano;
+                profileData.details = {
+                    foto_perfil: profiles[0].foto_perfil,
+                    fecha_nacimiento: profiles[0].fecha_nacimiento,
+                    genero: profiles[0].genero,
+                    ocupacion: profiles[0].ocupacion,
+                    biografia: profiles[0].biografia,
+                    red_social: profiles[0].red_social
+                };
+            }
+
         } else if (user.tipo_usuario === 'organizacion') {
-            const [profiles] = await conmysql.query('SELECT * FROM perfiles_organizaciones WHERE id_usuario = ?', [userId]);
-            profile = profiles[0] || {};
+            const [profiles] = await conmysql.query(
+                'SELECT id_perfil_organizacion, logo_organizacion, representante, mision, vision, sitio_web, redes_sociales, fecha_fundacion FROM perfiles_organizaciones WHERE id_usuario = ?', 
+                [userId]
+            );
+            
+            if (profiles.length > 0) {
+                profileData.profile_id = profiles[0].id_perfil_organizacion;
+                profileData.details = {
+                    logo_organizacion: profiles[0].logo_organizacion,
+                    representante: profiles[0].representante,
+                    mision: profiles[0].mision,
+                    vision: profiles[0].vision,
+                    sitio_web: profiles[0].sitio_web,
+                    redes_sociales: profiles[0].redes_sociales,
+                    fecha_fundacion: profiles[0].fecha_fundacion
+                };
+            }
         }
 
+        // Estructura clara de respuesta
         res.json({
-          user,
-          perfil: profile
-          }); 
+            user: {
+                id: user.id_usuario,
+                tipo_usuario: user.tipo_usuario,
+                nombre: user.nombre,
+                email: user.email,
+                telefono: user.telefono,
+                direccion: user.direccion,
+                fecha_registro: user.fecha_registro
+            },
+            profile: profileData
+        });
 
     } catch (error) {
         console.error(error);
-        res.status(500).json({ message: 'Error al obtener perfil de usuario' });
+        res.status(500).json({ 
+            message: 'Error al obtener perfil de usuario',
+            error: error.message 
+        });
     }
 };
 
 // Actualizar perfil de usuario
-export const updateUserProfile = async (req, res) => {
+export const putUserProfile = async (req, res) => {
     const userId = req.user.id;
     const { nombre, telefono, direccion, ...profileData } = req.body;
 
@@ -237,7 +285,7 @@ export const updateUserProfile = async (req, res) => {
 };
 
 // Actualización parcial del perfil de usuario (solo campos enviados)
-export const updatePartialUserProfile = async (req, res) => {
+export const patchUserProfile = async (req, res) => {
     const userId = req.user.id;
     const { nombre, telefono, direccion, ...profileData } = req.body;
 
@@ -386,9 +434,5 @@ export const deleteUser = async (req, res) => {
         error: error.message
       });
     }
-
-
-
-
   };
   
